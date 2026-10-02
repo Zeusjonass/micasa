@@ -1,0 +1,89 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Fraunces', ui-serif, Georgia, serif;
+
+  --color-ink: #1c1915;
+  --color-ink-soft: #5c564e;
+  --color-paper: #f4efe6;
+  --color-paper-2: #ebe4d6;
+  --color-cream: #fffaf2;
+  --color-line: #ddd4c4;
+  --color-forest: #14241f;
+  --color-forest-2: #1c332c;
+  --color-moss: #2f5c4c;
+  --color-gold: #c4a574;
+  --color-gold-2: #a4844e;
+  --color-danger: #8b3a2a;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-gold) 45%, transparent);
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+
+.safe-bottom {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+.paper-shadow {
+  box-shadow:
+    0 1px 0 rgba(28, 25, 21, 0.04),
+    0 12px 32px -18px rgba(20, 36, 31, 0.35);
+}
+
+@keyframes assistant-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-in {
+  animation: assistant-hint-in 220ms ease-out;
+}
+
+.diff-del {
+  background: color-mix(in srgb, var(--color-danger) 16%, transparent);
+  color: var(--color-danger);
+  text-decoration: line-through;
+  border-radius: 2px;
+}
+
+.diff-ins {
+  background: color-mix(in srgb, var(--color-moss) 18%, transparent);
+  color: var(--color-moss);
+  border-radius: 2px;
+}

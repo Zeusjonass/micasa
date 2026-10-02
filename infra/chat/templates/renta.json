@@ -1,0 +1,83 @@
+{
+  "heading": "CONTRATO DE ARRENDAMIENTO DE CASA HABITACIÓN",
+  "modules": [
+    {
+      "id": "comparecencia",
+      "title": "Comparecencia",
+      "articles": ["1564"],
+      "body": "CONTRATO DE ARRENDAMIENTO DE CASA HABITACIÓN QUE CELEBRAN, POR UNA PARTE, {{arrendador}}, A QUIEN EN LO SUCESIVO SE DENOMINARÁ “EL ARRENDADOR”; Y POR LA OTRA PARTE, {{arrendatario}}, A QUIEN EN LO SUCESIVO SE DENOMINARÁ “EL ARRENDATARIO”; Y EN CONJUNTO “LAS PARTES”, SUJETÁNDOSE A LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS."
+    },
+    {
+      "id": "declaraciones-arrendador",
+      "title": "Declaraciones del arrendador",
+      "articles": ["1564", "1565"],
+      "body": "El arrendador declara: ser propietario o estar facultado para dar en arrendamiento el inmueble ubicado en {{direccion}}, de conformidad con el artículo 1564 y, en su caso, el 1565 del Código Civil del Estado de Yucatán; que no existe impedimento legal para ocuparlo ni gravamen que impida este arrendamiento; y que señala el mismo inmueble como domicilio para oír y recibir notificaciones, salvo aviso escrito en contrario."
+    },
+    {
+      "id": "declaraciones-arrendatario",
+      "title": "Declaraciones del arrendatario",
+      "articles": ["1564"],
+      "body": "El arrendatario declara: tener capacidad legal para contratar; recibir el inmueble para uso de casa habitación; conocer su estado y pertenencias; contar con recursos para cubrir la renta y demás obligaciones de este contrato; y señalar como domicilio para oír y recibir notificaciones el inmueble arrendado."
+    },
+    {
+      "id": "objeto",
+      "title": "PRIMERA.- Objeto",
+      "articles": ["1564", "1574"],
+      "body": "El arrendador concede al arrendatario el uso y goce temporal del inmueble ubicado en {{direccion}}, mediante precio cierto, en los términos del artículo 1564 del Código Civil del Estado de Yucatán. El arrendador se obliga a entregarlo con sus pertenencias y en estado de servir para casa habitación (art. 1574, fracción I), con las llaves y accesos que correspondan."
+    },
+    {
+      "id": "uso",
+      "title": "SEGUNDA.- Uso y goce pacífico",
+      "articles": ["1574", "1617"],
+      "body": "El inmueble se destinará exclusivamente a casa habitación. Queda prohibido el hospedaje oneroso, el uso comercial o cualquier destino distinto sin autorización escrita. El arrendador no estorbará ni embarazará el uso, salvo por reparaciones urgentes e indispensables, y garantizará el uso y goce pacífico (art. 1574, fracciones III y IV). Si el inmueble forma parte de un condominio o fraccionamiento, el arrendatario observará su reglamento. En predios urbanos, las disposiciones municipales y de sanidad corresponden al propietario, en lo conducente (art. 1617)."
+    },
+    {
+      "id": "vigencia",
+      "title": "TERCERA.- Vigencia y prórroga",
+      "articles": ["1573", "1620"],
+      "body": "La vigencia es de {{plazo}}, a partir de la fecha de firma. En predios para habitación, el plazo se entiende siempre establecido en beneficio del inquilino (art. 1620). Todo arrendamiento debe constar por escrito; si el plazo no excede de tres años, en documento ante notario, y si excede de ese plazo, en escritura pública (art. 1573). Si al vencimiento las partes continúan de hecho, se entenderá prorrogado por el mismo plazo, salvo aviso escrito de cualquiera de ellas con treinta días de anticipación."
+    },
+    {
+      "id": "renta-pago",
+      "title": "CUARTA.- Renta, pago y mora",
+      "articles": ["1571", "1572"],
+      "body": "La renta mensual es de {{rentaMensual}}, cantidad cierta y determinada. Se pagará por mensualidades anticipadas el {{diaPago}}, por transferencia o el medio que acuerden, previa entrega de recibo o comprobante que reúna requisitos fiscales, puntualmente y sin necesidad de requerimiento. El atraso faculta a exigir el cumplimiento o la terminación, conforme a la ley. No se pactan intereses usurarios ni recargos distintos de los que permita la legislación aplicable. Las partes no podrán pactar revisiones de renta en periodos inferiores a los que permita la ley."
+    },
+    {
+      "id": "deposito",
+      "title": "QUINTA.- Depósito o fianza",
+      "articles": ["1619"],
+      "body": "Para garantizar el cumplimiento de este contrato de predio destinado a habitación, el arrendatario entrega el equivalente a {{deposito}}. Si el arrendador exigiera fianza y el arrendatario no pudiera otorgarla, no podrá exigirse más garantía que el depósito de dinero correspondiente a un mes de renta (art. 1619). El depósito no se aplica a rentas ordinarias y se devolverá al término, descontando únicamente daños distintos del deterioro por el uso ordinario, dentro de los treinta días siguientes a la restitución del inmueble y de las llaves."
+    },
+    {
+      "id": "servicios",
+      "title": "SEXTA.- Servicios",
+      "articles": ["1574"],
+      "body": "Serán por cuenta del arrendatario el pago de energía eléctrica, agua, gas, internet y demás suministros particulares que contrate, así como su contratación a su nombre cuando proceda. El impuesto predial y, en su caso, cuotas de mantenimiento del inmueble, serán por cuenta del arrendador, salvo pacto escrito en contrario. Al término, el arrendatario dejará los servicios al corriente."
+    },
+    {
+      "id": "conservacion",
+      "title": "SÉPTIMA.- Conservación, reparaciones e inspección",
+      "articles": ["1574", "1610", "1618"],
+      "body": "El arrendador conservará el predio en estado de servir para habitación, haciendo las reparaciones necesarias (art. 1574, fracción II), y responderá de los defectos ocultos anteriores al arrendamiento (art. 1574, fracción V). El arrendatario cubrirá los deterioros de poca importancia causados por el uso normal. Si el arrendador no hiciere las obras que ordene la autoridad sanitaria o municipal para que el predio sea habitable, será responsable de los daños y el inquilino podrá hacerlas descontando su importe de la renta (art. 1618). El arrendatario no hará obras, mejoras ni adaptaciones sin autorización escrita. El arrendador podrá inspeccionar el inmueble en día y hora hábiles, con aviso de cuando menos veinticuatro horas, sin estorbar el uso."
+    },
+    {
+      "id": "inventario",
+      "title": "OCTAVA.- Inventario, llaves y entrega",
+      "articles": ["1574"],
+      "body": "A la entrega se hará constar, por escrito o por medios gráficos, el estado del inmueble, sus pertenencias, acabados y el número de llaves, controles o accesos. Ese inventario forma parte de este contrato. El arrendatario recibe el inmueble en el estado que se describa y se obliga a restituirlo en las mismas condiciones, salvo el deterioro natural por el uso convenido y el transcurso del tiempo."
+    },
+    {
+      "id": "terminacion",
+      "title": "NOVENA.- Subarriendo, terminación y devolución",
+      "articles": ["1583", "1629", "1645-1650"],
+      "body": "Queda prohibido el subarriendo total o parcial y la cesión de derechos sin autorización escrita (arts. 1645 a 1650). El arrendatario se servirá de la cosa solo para el uso convenido (art. 1583, fracción III). La falta de pago de tres meses de renta en predio habitacional, el uso contrario a lo convenido o el subarriendo facultan a rescindir, conforme al artículo 1629 del Código Civil del Estado de Yucatán. Cualquiera de las partes podrá dar por terminado el contrato al vencimiento con el aviso de treinta días a que se refiere la cláusula de vigencia. No se pacta desalojo por vía de hecho. Al término, el arrendatario restituirá el inmueble vacío, con llaves y al corriente de suministros."
+    },
+    {
+      "id": "jurisdiccion",
+      "title": "DÉCIMA.- Notificaciones, mediación y jurisdicción",
+      "articles": ["1564", "990"],
+      "body": "Las notificaciones entre las partes se harán en los domicilios señalados, o por correo electrónico si lo pactan por escrito. Las partes procurarán, de manera previa y voluntaria, una mediación conforme a la Ley de Mecanismos Alternativos de Solución de Controversias del Estado de Yucatán. Todo lo no previsto se rige por el Código Civil del Estado de Yucatán. Para la interpretación y cumplimiento, se someten a los jueces y tribunales competentes de Mérida, Yucatán, renunciando a cualquier otro fuero. Las partes declaran que no media dolo, error ni mala fe, y firman de conformidad."
+    }
+  ]
+}

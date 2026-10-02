@@ -1,0 +1,59 @@
+{
+  "heading": "CONTRATO DE COMPRAVENTA DE CASA HABITACIÓN",
+  "modules": [
+    {
+      "id": "comparecencia",
+      "title": "Comparecencia",
+      "articles": ["1397"],
+      "body": "CONTRATO DE COMPRAVENTA DE INMUEBLE DESTINADO A CASA HABITACIÓN QUE CELEBRAN, POR UNA PARTE, {{vendedor}}, A QUIEN EN LO SUCESIVO SE DENOMINARÁ “EL VENDEDOR”; Y POR LA OTRA PARTE, {{comprador}}, A QUIEN EN LO SUCESIVO SE DENOMINARÁ “EL COMPRADOR”; DE CONFORMIDAD CON EL ARTÍCULO 1397 DEL CÓDIGO CIVIL DEL ESTADO DE YUCATÁN Y LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS."
+    },
+    {
+      "id": "declaraciones-vendedor",
+      "title": "Declaraciones del vendedor",
+      "articles": ["1397", "1402"],
+      "body": "El vendedor declara: ser propietario del inmueble ubicado en {{direccion}}, y tener facultades para enajenarlo; que, salvo lo que se haga constar en la escritura, el inmueble se encuentra al corriente de predial, derechos y cuotas, y será transmitido libre de gravámenes, ocupantes y adeudos que impidan el dominio; y que la compraventa de inmueble requiere la formalidad que la ley señala (art. 1402)."
+    },
+    {
+      "id": "declaraciones-comprador",
+      "title": "Declaraciones del comprador",
+      "articles": ["1397", "1454-1461"],
+      "body": "El comprador declara: tener capacidad legal y económica para esta operación; haber conocido el inmueble en el estado en que se encuentra; saber que la transmisión de la propiedad se formalizará en escritura pública ante notario e inscripción en INSEJUPY; y señalar como domicilio para oír y recibir notificaciones el inmueble objeto de este contrato, o el que indique por escrito."
+    },
+    {
+      "id": "objeto",
+      "title": "PRIMERA.- Objeto",
+      "articles": ["1397", "1418-1433"],
+      "body": "El vendedor vende y el comprador compra el inmueble destinado a casa habitación ubicado en {{direccion}}, con todo cuanto de hecho y por derecho le corresponde, incluyendo construcciones, instalaciones fijas y pertenencias. La descripción catastral, superficie, linderos y, en su caso, folio registral, se precisarán en la escritura pública. Este documento es un borrador de trabajo y no sustituye esa escritura."
+    },
+    {
+      "id": "precio",
+      "title": "SEGUNDA.- Precio y forma de pago",
+      "articles": ["1397", "1454-1461"],
+      "body": "El precio de la operación es de {{precio}}, precio cierto y en dinero (art. 1397). La forma de pago es {{formaPago}}. El precio se hará constar también en la escritura pública. Las obligaciones de pago del comprador se rigen, en lo conducente, por los artículos 1454 a 1461 del Código Civil del Estado de Yucatán. Los anticipos, si los hay, se imputan a cuenta del precio, salvo que las partes pacten otra cosa por escrito."
+    },
+    {
+      "id": "estado",
+      "title": "TERCERA.- Estado jurídico, evicción y entrega",
+      "articles": ["1418-1453"],
+      "body": "El vendedor responderá del saneamiento por evicción y vicios ocultos, en los términos de los artículos 1434 a 1453 del Código Civil del Estado de Yucatán, y se obliga a exhibir ante notario los títulos y documentos que acrediten el dominio. La entrega material se hará en la fecha que señalen las partes ante notario, libre de ocupantes y de pertenencias ajenas, conforme a los artículos 1418 a 1433, con llaves y accesos. El vendedor se obliga a que, a la firma de la escritura, el inmueble esté al corriente de impuestos, derechos y cuotas, salvo pacto expreso en contrario."
+    },
+    {
+      "id": "escritura",
+      "title": "CUARTA.- Escritura, notario e inscripción",
+      "articles": ["1402", "1397"],
+      "body": "La transmisión de la propiedad se formalizará en escritura pública ante notario del Estado de Yucatán, que en la práctica suele designar el comprador, y se inscribirá en el Instituto de Seguridad Jurídica Patrimonial de Yucatán (INSEJUPY). En operaciones de vivienda aplican, en lo conducente, los elementos de la NOM-247-SE-2021. Este borrador no es el modelo de adhesión de un desarrollador en preventa ni sustituye el instrumento notarial."
+    },
+    {
+      "id": "gastos",
+      "title": "QUINTA.- Gastos e impuestos",
+      "articles": ["1397"],
+      "body": "Los gastos de escritura, derechos de inscripción y el impuesto de adquisición de inmuebles se cubrirán conforme convengan las partes en la notaría. El vendedor cubrirá el impuesto sobre la renta que le corresponda por la enajenación. Cada parte cubre sus honorarios y avalúos propios, salvo pacto escrito."
+    },
+    {
+      "id": "jurisdiccion",
+      "title": "SEXTA.- Notificaciones, mediación y jurisdicción",
+      "articles": ["1397"],
+      "body": "Las notificaciones se harán en los domicilios señalados, o por correo electrónico si lo pactan por escrito. Las partes procurarán, de manera previa y voluntaria, una mediación conforme a la Ley de Mecanismos Alternativos de Solución de Controversias del Estado de Yucatán. Todo lo no previsto se rige por el Código Civil del Estado de Yucatán. Para la interpretación y cumplimiento, se someten a los jueces y tribunales competentes de Mérida, Yucatán, renunciando a cualquier otro fuero. Las partes declaran que no media dolo, error ni mala fe, y firman de conformidad."
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Logs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:us-east-1:276009030184:*"
+    },
+    {
+      "Sid": "Dynamo",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:UpdateItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:us-east-1:276009030184:table/micasa",
+        "arn:aws:dynamodb:us-east-1:276009030184:table/micasa/index/*"
+      ]
+    },
+    {
+      "Sid": "Templates",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": "arn:aws:s3:::micasa-kb-source/templates/*"
+    },
+    {
+      "Sid": "RetrieveKb",
+      "Effect": "Allow",
+      "Action": ["bedrock:Retrieve"],
+      "Resource": "arn:aws:bedrock:us-east-1:276009030184:knowledge-base/Q1UNTTTE8X"
+    },
+    {
+      "Sid": "BedrockModels",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream",
+        "bedrock:GetInferenceProfile"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0",
+        "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0",
+        "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "arn:aws:bedrock:*::foundation-model/amazon.nova-2-lite-v1:0",
+        "arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0",
+        "arn:aws:bedrock:*::foundation-model/amazon.nova-2-pro-v1:0",
+        "arn:aws:bedrock:*::foundation-model/moonshotai.kimi-k3",
+        "arn:aws:bedrock:us-east-1:276009030184:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0",
+        "arn:aws:bedrock:us-east-1:276009030184:inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0",
+        "arn:aws:bedrock:us-east-1:276009030184:inference-profile/us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "arn:aws:bedrock:us-east-1:276009030184:inference-profile/us.amazon.nova-2-lite-v1:0",
+        "arn:aws:bedrock:us-east-1:276009030184:inference-profile/global.amazon.nova-2-lite-v1:0",
+        "arn:aws:bedrock:us-east-1:276009030184:inference-profile/us.amazon.nova-pro-v1:0",
+        "arn:aws:bedrock:us-east-1:276009030184:inference-profile/us.amazon.nova-2-pro-v1:0",
+        "arn:aws:bedrock:us-east-1:276009030184:inference-profile/us.moonshotai.kimi-k3",
+        "arn:aws:bedrock:us-east-1:276009030184:inference-profile/global.moonshotai.kimi-k3"
+      ]
+    }
+  ]
+}

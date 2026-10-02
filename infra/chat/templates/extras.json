@@ -1,0 +1,139 @@
+{
+  "numberWords": {
+    "1": "UNA (1)",
+    "2": "DOS (2)",
+    "3": "TRES (3)"
+  },
+  "items": [
+    {
+      "id": "mascotas",
+      "title": "Mascotas",
+      "articles": ["1583", "1629"],
+      "match": ["mascota"],
+      "defaultMode": "prohibido",
+      "modes": {
+        "permitido": ["se permite", "si se permite", "maximo", "hasta", "una mascota", "1 mascota", "pequen"],
+        "prohibido": ["no mascot", "sin mascot", "prohibid", "no se permit", "no permit", "ningun", "cero mascot"]
+      },
+      "detalleMap": {
+        "pequen": " de talla pequeña",
+        "median": " de talla mediana",
+        "grand": " de talla grande"
+      },
+      "variants": {
+        "prohibido": {
+          "renta": "El uso de casa habitación no incluye la guarda de animales que afecten la tranquilidad de los vecinos o causen daños estructurales o a las pertenencias del inmueble. El arrendatario responderá de esos daños (art. 1583, fracción II). Si el animal altera esa tranquilidad o ese uso, se tendrá como uso distinto al convenido y el arrendador podrá solicitar la rescisión ante las instancias competentes (arts. 1583, fracción III, y 1629, fracción II). Este pacto no impide los animales de asistencia que la ley reconozca.",
+          "venta": "Quien habite el inmueble responderá de los daños que cause un animal y de la afectación a la tranquilidad de los vecinos o a la estructura. Este pacto no impide los animales de asistencia que la ley reconozca."
+        },
+        "permitido": {
+          "renta": "Se permite al arrendatario mantener hasta {{maxMascotas}} mascota{{pluralMascotas}}{{detalleMascotas}} en el inmueble, como parte del uso de casa habitación, siempre que no afecte la tranquilidad de los vecinos ni cause daños estructurales. El arrendatario responderá de los daños que cause el animal (art. 1583, fracción II). Un número mayor, especies no autorizadas o la afectación grave de vecinos o de la estructura se tendrán como uso distinto al convenido y el arrendador podrá solicitar la rescisión ante las instancias competentes (arts. 1583, fracción III, y 1629, fracción II). Este pacto no impide los animales de asistencia que la ley reconozca.",
+          "venta": "Las partes convienen que en el inmueble se permitirá mantener hasta {{maxMascotas}} mascota{{pluralMascotas}}{{detalleMascotas}}, siempre que no afecten la tranquilidad de los vecinos ni la estructura. Quien lo habite responderá de los daños que cause el animal. Este pacto no impide los animales de asistencia que la ley reconozca."
+        }
+      }
+    },
+    {
+      "id": "estacionamiento",
+      "title": "Estacionamiento",
+      "articles": ["1564"],
+      "match": ["estacionamiento", "cochera"],
+      "defaultMode": "default",
+      "modes": {},
+      "variants": {
+        "default": {
+          "renta": "En su caso, el uso de cajón o área de estacionamiento se rige por este contrato y por el reglamento del inmueble. No genera un derecho real distinto del arrendamiento. El arrendatario no podrá cederlo ni subarrendarlo sin autorización escrita.",
+          "venta": "En su caso, el cajón o área de estacionamiento se describirá en la escritura pública. No genera por sí un derecho real distinto del inmueble objeto de este contrato."
+        }
+      }
+    },
+    {
+      "id": "ocupacion",
+      "title": "Ocupación",
+      "articles": ["1583", "1629"],
+      "match": ["personas", "ocupa", "habitante", "nino", "nina", "menor", "bebe", "familia"],
+      "defaultMode": "default",
+      "modes": {
+        "limitado": ["maximo", "hasta", "solo"]
+      },
+      "variants": {
+        "default": {
+          "renta": "El inmueble se destina a casa habitación del arrendatario y de quienes convivan con él de manera permanente. Queda prohibido destinarlo a hospedaje oneroso, temporal o uso distinto al convenido. El arrendatario se servirá de la cosa solo para ese uso (art. 1583, fracción III). El incumplimiento podrá dar lugar a rescisión (art. 1629, fracción II).",
+          "venta": "El inmueble se destina a casa habitación. Queda prohibido destinarlo a hospedaje oneroso o uso distinto del habitacional, salvo pacto escrito."
+        },
+        "limitado": {
+          "renta": "El inmueble podrá ser habitado por un máximo de {{maxCantidad}} persona{{plural}}, para uso exclusivo de casa habitación. Queda prohibido el hospedaje oneroso, el subarriendo y variar el uso convenido sin autorización escrita. El arrendatario se obliga a lo dispuesto en el artículo 1583, fracción III; el incumplimiento podrá dar lugar a rescisión conforme al artículo 1629, fracción II, del Código Civil del Estado de Yucatán.",
+          "venta": "Las partes convienen que el inmueble podrá ser habitado por un máximo de {{maxCantidad}} persona{{plural}}, sin destinarlo a hospedaje oneroso, salvo pacto escrito."
+        }
+      }
+    },
+    {
+      "id": "convivencia",
+      "title": "Convivencia y fiestas",
+      "articles": ["1583", "1629"],
+      "match": ["fiesta", "reunion", "ruido", "convivencia", "evento"],
+      "defaultMode": "default",
+      "modes": {},
+      "variants": {
+        "default": {
+          "renta": "Quedan prohibidas las fiestas, reuniones o eventos que alteren la tranquilidad del inmueble o del vecindario o impliquen un uso distinto al de casa habitación. El arrendatario responderá de los daños (art. 1583, fracción II) y se servirá de la cosa solo para el uso convenido (art. 1583, fracción III). El incumplimiento faculta al arrendador a solicitar la rescisión ante las instancias competentes (art. 1629, fracción II).",
+          "venta": "Quedan prohibidas las fiestas o eventos que alteren la tranquilidad del inmueble o del vecindario, salvo pacto escrito de las partes."
+        }
+      }
+    },
+    {
+      "id": "condominio",
+      "title": "Reglamento de condominio",
+      "articles": ["1564"],
+      "match": ["condominio", "fraccionamiento", "reglamento"],
+      "defaultMode": "default",
+      "modes": {},
+      "variants": {
+        "default": {
+          "renta": "Si el inmueble forma parte de un condominio o fraccionamiento, el arrendatario se obliga a observar el reglamento interno como parte del uso convenido (art. 1583, fracción III). El incumplimiento grave faculta al arrendador a solicitar la rescisión ante las instancias competentes (art. 1629, fracción II).",
+          "venta": "Si el inmueble forma parte de un condominio o fraccionamiento, el comprador se subroga en los derechos y obligaciones del reglamento y de las cuotas que correspondan a partir de la entrega o de la escritura, según se pacte ante notario."
+        }
+      }
+    },
+    {
+      "id": "reparaciones",
+      "title": "Reparaciones",
+      "articles": ["1574", "1583", "1618"],
+      "match": ["reparacion", "filtracion", "gotera", "vicio oculto", "humedad"],
+      "defaultMode": "default",
+      "modes": {},
+      "variants": {
+        "default": {
+          "renta": "El arrendador conservará el predio en estado de servir para habitación y hará las reparaciones necesarias, incluidas las estructurales y las que deriven de vicios ocultos o de causas naturales, de conformidad con el artículo 1574, fracciones II y V, del Código Civil del Estado de Yucatán. El arrendatario cubrirá únicamente los deterioros de poca importancia causados por el uso normal (art. 1583, fracción II). No se pacta que el arrendatario pague filtraciones, techos, humedad por lluvia ni otros daños estructurales. Si el arrendador no hiciere las obras que ordene la autoridad sanitaria o municipal, el inquilino podrá hacerlas descontando su importe de la renta (art. 1618).",
+          "venta": "Los vicios ocultos y las reparaciones estructurales se rigen por las disposiciones de la compraventa. No se pacta que el adquirente asuma defectos ocultos anteriores a la entrega, salvo lo que conste en escritura."
+        }
+      }
+    },
+    {
+      "id": "mora",
+      "title": "Mora y recargos",
+      "articles": ["1571", "1629"],
+      "match": ["mora", "morator", "recargo", "candado", "usura", "% diario", "por ciento diario"],
+      "defaultMode": "default",
+      "modes": {},
+      "variants": {
+        "default": {
+          "renta": "El atraso en el pago faculta a exigir el cumplimiento o a solicitar la rescisión ante las instancias competentes cuando se actualice la falta de pago de tres meses de renta en predio habitacional, de conformidad con el artículo 1629, fracción I, del Código Civil del Estado de Yucatán. La renta es cantidad cierta (art. 1571). No se pactan intereses usurarios ni recargos distintos de los que permita la legislación aplicable. Queda prohibido el cambio de candados, el bloqueo de accesos, el corte de servicios y cualquier desalojo por vía de hecho.",
+          "venta": "El incumplimiento del precio se rige por lo pactado en la escritura y por la legislación aplicable. No se pactan intereses usurarios ni vías de hecho."
+        }
+      }
+    },
+    {
+      "id": "uso-licito",
+      "title": "Uso lícito",
+      "articles": ["1573", "1583", "1629"],
+      "match": ["droga", "narco", "extinc", "ilicito", "delincuen", "fiscalia", "aseguramiento"],
+      "defaultMode": "default",
+      "modes": {},
+      "variants": {
+        "default": {
+          "renta": "El inmueble se destina exclusivamente a casa habitación lícita. El arrendatario declara que los recursos con que cubre la renta son de procedencia lícita y se obliga a no destinar el predio a actividades ilícitas. Ese destino se tendrá como uso distinto al convenido (art. 1583, fracción III) y el arrendador podrá solicitar la rescisión ante las instancias competentes (art. 1629, fracción II). No se pacta el pago del valor comercial del inmueble ni multa por aseguramiento. El contrato debe constar por escrito (art. 1573); su ratificación o constancia ante fedatario, cuando proceda, robustece la oponibilidad frente a terceros.",
+          "venta": "El inmueble se destina a uso lícito. El comprador declara la procedencia lícita de los recursos. No se pacta el pago del valor comercial como multa. La oponibilidad se robustece con la escritura y su inscripción."
+        }
+      }
+    }
+  ]
+}

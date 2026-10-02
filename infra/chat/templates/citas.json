@@ -1,0 +1,59 @@
+{
+  "renta": [
+    {
+      "article": "1583",
+      "role": "arrendatario",
+      "text": "El arrendatario está obligado: I. a pagar la renta en tiempo y forma; II. a responder de los daños que la cosa sufra por su culpa o la de sus familiares; III. a servirse de la cosa solamente para el uso convenido o conforme a su naturaleza. La fracción II cubre solo deterioros por uso o culpa, no la estructura del predio."
+    },
+    {
+      "article": "1629",
+      "role": "rescision",
+      "text": "El arrendamiento puede rescindirse: I. por falta de pago de tres meses de renta en predios urbanos para habitación; II. por usarse la cosa en contravención a la fracción III del artículo 1583; III. por subarriendo, salvo pacto en contrario. La rescisión se solicita ante las instancias competentes; no es automática ni por vía de hecho."
+    },
+    {
+      "article": "1645",
+      "role": "subarriendo",
+      "text": "El subarriendo total o parcial sin autorización se rige por los artículos 1645 a 1650."
+    },
+    {
+      "article": "1574",
+      "role": "arrendador",
+      "text": "El arrendador está obligado a: I. entregar la cosa; II. conservarla en estado de servir para el uso convenido; III. no estorbar ni embarazar el uso; IV. garantizar el uso y goce pacífico; V. responder de los defectos ocultos anteriores al arrendamiento. No fundamenta sanción al inquilino ni permite trasladarle reparaciones estructurales, vicios ocultos o daños por causas naturales."
+    },
+    {
+      "article": "1618",
+      "role": "obras-habitabilidad",
+      "text": "Si el arrendador no hiciere las obras que ordene la autoridad sanitaria o municipal para que el predio sea habitable, será responsable de los daños y el inquilino podrá hacerlas descontando su importe de la renta."
+    },
+    {
+      "article": "1564",
+      "role": "definicion",
+      "text": "Solo define el arrendamiento. No fundamenta rescisión ni obligaciones del inquilino."
+    },
+    {
+      "article": "1571",
+      "role": "renta",
+      "text": "La renta debe ser cierta y determinada. No autoriza recargos usurarios ni un porcentaje diario inventado."
+    },
+    {
+      "article": "1573",
+      "role": "forma",
+      "text": "El arrendamiento debe constar por escrito. Esa constancia, y en su caso la ratificación ante fedatario, es lo que acredita la relación frente a terceros. No se sustituye con una multa del valor comercial."
+    },
+    {
+      "article": "limites",
+      "role": "via-de-hecho",
+      "text": "No se pacta desalojo, ingreso forzoso, cambio de cerraduras o candados, retiro de bienes ni corte de agua, luz o gas por vía de hecho. Esas conductas no se redactan. La rescisión se pide conforme al artículo 1629; las partes pueden acudir a mediación."
+    },
+    {
+      "article": "limites",
+      "role": "usura",
+      "text": "No se pactan intereses usurarios ni recargos distintos de los que permita la legislación aplicable. No se inventa una tasa diaria. La rescisión por falta de pago en predio habitacional es a los tres meses (art. 1629, fracción I)."
+    },
+    {
+      "article": "limites",
+      "role": "uso-licito",
+      "text": "El artículo 1583 regula el uso convenido, no la extinción de dominio. Un destino ilícito se trata como uso distinto (1583-III) y puede pedir rescisión (1629-II). No se pacta el valor comercial en un plazo. El blindaje frente a terceros es el contrato escrito y, en su caso, su ratificación."
+    }
+  ]
+}
