@@ -1,18 +1,49 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { AskPanel } from './AskPanel'
 
-const MARGIN = 16
 const CIRCLE = 56
+const MARGIN = 16
 const STORAGE_KEY = 'micasa:assistant-pos'
 
 type Position = { x: number; y: number }
+
+function viewBox() {
+  const vv = window.visualViewport
+  if (vv && vv.width > 0 && vv.height > 0) {
+    return { width: vv.width, height: vv.height, left: vv.offsetLeft, top: vv.offsetTop }
+  }
+  return {
+    width: document.documentElement.clientWidth || window.innerWidth,
+    height: document.documentElement.clientHeight || window.innerHeight,
+    left: 0,
+    top: 0,
+  }
+}
+
+function clampCircle(x: number, y: number): Position {
+  const box = viewBox()
+  const minX = box.left + MARGIN
+  const minY = box.top + MARGIN
+  const maxX = box.left + box.width - CIRCLE - MARGIN
+  const maxY = box.top + box.height - CIRCLE - MARGIN
+  return {
+    x: Math.min(Math.max(minX, x), Math.max(minX, maxX)),
+    y: Math.min(Math.max(minY, y), Math.max(minY, maxY)),
+  }
+}
+
+function defaultPosition(): Position {
+  const box = viewBox()
+  return clampCircle(box.left + box.width - CIRCLE - MARGIN, box.top + box.height - CIRCLE - MARGIN)
+}
 
 function readPosition(): Position | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as Position
-    if (typeof parsed.x === 'number' && typeof parsed.y === 'number') return parsed
+    if (typeof parsed.x === 'number' && typeof parsed.y === 'number') return clampCircle(parsed.x, parsed.y)
   } catch {
     /* ignore */
   }
@@ -27,17 +58,10 @@ function writePosition(position: Position) {
   }
 }
 
-function defaultPosition(): Position {
-  return {
-    x: Math.max(MARGIN, window.innerWidth - CIRCLE - MARGIN),
-    y: Math.max(MARGIN, window.innerHeight - CIRCLE - MARGIN),
-  }
-}
-
 export function FloatingAssistant({ projectId }: { projectId: string }) {
   const [open, setOpen] = useState(false)
-  const [position, setPosition] = useState<Position>(() => readPosition() ?? defaultPosition())
-  const [hint, setHint] = useState(() => !readPosition())
+  const [position, setPosition] = useState<Position>(defaultPosition)
+  const [hint, setHint] = useState(() => !window.localStorage.getItem(STORAGE_KEY))
   const positionRef = useRef(position)
   const dragRef = useRef<{
     startX: number
@@ -47,29 +71,24 @@ export function FloatingAssistant({ projectId }: { projectId: string }) {
     moved: boolean
   } | null>(null)
 
-  const clampCircle = useCallback((x: number, y: number): Position => {
-    const maxX = Math.max(MARGIN, window.innerWidth - CIRCLE - MARGIN)
-    const maxY = Math.max(MARGIN, window.innerHeight - CIRCLE - MARGIN)
-    return { x: Math.min(Math.max(MARGIN, x), maxX), y: Math.min(Math.max(MARGIN, y), maxY) }
-  }, [])
-
   useEffect(() => {
     positionRef.current = position
   }, [position])
 
   useEffect(() => {
-    function onResize() {
+    setPosition(readPosition() ?? defaultPosition())
+    function onViewport() {
       setPosition((current) => clampCircle(current.x, current.y))
     }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [clampCircle])
-
-  useEffect(() => {
-    if (!hint) return
-    const timer = window.setTimeout(() => setHint(false), 4200)
-    return () => window.clearTimeout(timer)
-  }, [hint])
+    window.addEventListener('resize', onViewport)
+    window.visualViewport?.addEventListener('resize', onViewport)
+    window.visualViewport?.addEventListener('scroll', onViewport)
+    return () => {
+      window.removeEventListener('resize', onViewport)
+      window.visualViewport?.removeEventListener('resize', onViewport)
+      window.visualViewport?.removeEventListener('scroll', onViewport)
+    }
+  }, [])
 
   function startDrag(event: ReactPointerEvent, from: 'circle' | 'panel') {
     event.preventDefault()
@@ -105,21 +124,22 @@ export function FloatingAssistant({ projectId }: { projectId: string }) {
     window.addEventListener('pointerup', onUp)
   }
 
-  const panelWidth = Math.min(680, Math.max(320, window.innerWidth - MARGIN * 2))
+  const box = viewBox()
+  const panelWidth = Math.min(680, Math.max(320, box.width - MARGIN * 2))
   const panelLeft = Math.min(
-    Math.max(MARGIN, position.x + CIRCLE - panelWidth),
-    Math.max(MARGIN, window.innerWidth - panelWidth - MARGIN),
+    Math.max(box.left + MARGIN, position.x + CIRCLE - panelWidth),
+    Math.max(box.left + MARGIN, box.left + box.width - panelWidth - MARGIN),
   )
-  const spaceAbove = position.y - MARGIN
-  const spaceBelow = window.innerHeight - position.y - CIRCLE - MARGIN
+  const spaceAbove = position.y - (box.top + MARGIN)
+  const spaceBelow = box.top + box.height - MARGIN - position.y - CIRCLE
   const placeAbove = spaceAbove >= 280 || spaceAbove >= spaceBelow
   const maxPanelHeight = Math.max(220, (placeAbove ? spaceAbove : spaceBelow) - 12)
   const panelHeight = Math.min(600, maxPanelHeight)
   const panelStyle = placeAbove
-    ? { left: panelLeft, bottom: window.innerHeight - position.y + 12, height: panelHeight }
+    ? { left: panelLeft, bottom: box.top + box.height - position.y + 12, height: panelHeight }
     : { left: panelLeft, top: position.y + CIRCLE + 12, height: panelHeight }
 
-  return (
+  const ui = (
     <>
       {open ? (
         <div
@@ -155,8 +175,8 @@ export function FloatingAssistant({ projectId }: { projectId: string }) {
       {hint && !open ? (
         <div
           style={{
-            left: Math.max(MARGIN, position.x + CIRCLE - 220),
-            top: Math.max(MARGIN, position.y - 44),
+            left: Math.max(box.left + MARGIN, position.x + CIRCLE - 220),
+            top: Math.max(box.top + MARGIN, position.y - 44),
           }}
           className="paper-shadow animate-in pointer-events-none fixed z-40 max-w-[220px] rounded-xl border border-line bg-cream px-3 py-2 text-xs text-ink-soft"
         >
@@ -175,6 +195,8 @@ export function FloatingAssistant({ projectId }: { projectId: string }) {
       </button>
     </>
   )
+
+  return createPortal(ui, document.body)
 }
 
 function SparkleIcon() {

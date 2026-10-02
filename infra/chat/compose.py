@@ -570,6 +570,118 @@ def parse_composed(result: dict) -> list:
     return []
 
 
+REWRITE_TOOL = {
+    "toolSpec": {
+        "name": "apply_rewritten_clauses",
+        "description": (
+            "Devuelve SOLO las cláusulas que cambian de verdad. "
+            "Omite las que quedan igual. Conserva los id."
+        ),
+        "inputSchema": {
+            "json": {
+                "type": "object",
+                "required": ["clauses"],
+                "properties": {
+                    "clauses": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["id", "title", "body"],
+                            "properties": {
+                                "id": {"type": "string"},
+                                "title": {"type": "string"},
+                                "articles": {"type": "array", "items": {"type": "string"}},
+                                "body": {"type": "string"},
+                            },
+                        },
+                    }
+                },
+            }
+        },
+    }
+}
+
+REWRITE_SYSTEM = (
+    "Este chat edita el borrador. Cambia ÚNICAMENTE lo que el usuario pidió. "
+    "No reescribas, no corrijas estilo, puntuación, concordancia ni mayúsculas en el resto. "
+    "No inventes partes, montos ni direcciones. No cambies renta por compraventa ni al revés. "
+    "Si pide un término en todo el documento (EL PROMITENTE, etc.), ahí sí aplícalo donde aparezca. "
+    "Si pide una sola cláusula o un solo dato, deja las demás cláusulas fuera de la respuesta. "
+    "Conserva los id. Llama apply_rewritten_clauses."
+)
+
+
+def parse_rewritten(result: dict) -> list:
+    for block in result.get("output", {}).get("message", {}).get("content", []):
+        tool_use = block.get("toolUse") or {}
+        if tool_use.get("name") == "apply_rewritten_clauses":
+            payload = tool_use.get("input") or {}
+            return payload.get("clauses") or []
+    return []
+
+
+def _clause_norm(clause: dict) -> tuple:
+    title = re.sub(r"\s+", " ", (clause.get("title") or "")).replace("\u0001", "").replace("\u0002", "").strip()
+    body = re.sub(r"\s+", " ", (clause.get("body") or "")).replace("\u0001", "").replace("\u0002", "").strip()
+    return (clause.get("id"), title, body)
+
+
+def merge_rewritten(original: list, incoming: list) -> list:
+    incoming_by_id = {
+        item.get("id"): item
+        for item in incoming or []
+        if item.get("id") and item.get("body")
+    }
+    used: set[str] = set()
+    merged: list[dict] = []
+    for previous in original or []:
+        clause_id = previous.get("id")
+        item = incoming_by_id.get(clause_id) if clause_id else None
+        if not item:
+            merged.append(previous)
+            continue
+        used.add(clause_id)
+        next_clause = {
+            "id": clause_id,
+            "title": item.get("title") or previous.get("title"),
+            "articles": item.get("articles") or previous.get("articles") or [],
+            "body": item.get("body"),
+        }
+        merged.append(previous if _clause_norm(previous) == _clause_norm(next_clause) else next_clause)
+    for item in incoming or []:
+        clause_id = item.get("id")
+        if not clause_id or clause_id in used or not item.get("body"):
+            continue
+        merged.append(
+            {
+                "id": clause_id,
+                "title": item.get("title"),
+                "articles": item.get("articles") or [],
+                "body": item.get("body"),
+            }
+        )
+    return merged or original
+
+
+def rewrite_user_prompt(message: str, contract_type: str, clauses: list, slots: dict) -> str:
+    compact = []
+    for clause in clauses:
+        compact.append(
+            {
+                "id": clause.get("id"),
+                "title": clause.get("title"),
+                "articles": clause.get("articles") or [],
+                "body": clause.get("body"),
+            }
+        )
+    return (
+        f"Tipo de contrato: {contract_type}\n"
+        f"Datos: {json.dumps(slots or {}, ensure_ascii=False)}\n\n"
+        f"Cláusulas actuales:\n{json.dumps(compact, ensure_ascii=False)}\n\n"
+        f"Instrucción del usuario:\n{message}\n"
+    )
+
+
 def compose_user_prompt(
     message: str,
     contract_type: str,

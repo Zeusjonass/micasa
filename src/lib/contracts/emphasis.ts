@@ -68,6 +68,7 @@ export function pluralPartyLabel(label: string, count: number): string {
   const key = label.toLocaleUpperCase('es-MX')
   const map: Record<string, string> = {
     'EL VENDEDOR': 'LOS VENDEDORES',
+    'EL PROMITENTE VENDEDOR': 'LOS PROMITENTES VENDEDORES',
     'EL COMPRADOR': 'LOS COMPRADORES',
     'EL ARRENDADOR': 'LOS ARRENDADORES',
     'EL ARRENDATARIO': 'LOS ARRENDATARIOS',
@@ -110,12 +111,15 @@ export function resolveFooter(
   return {
     disclaimer: stored?.disclaimer || DISCLAIMER,
     closing: stored?.closing || DEFAULT_CLOSING,
+    heading: stored?.heading || '',
     leftLabel: stored?.leftLabel || parties.leftLabel,
     rightLabel: stored?.rightLabel || parties.rightLabel,
     leftName: joinPartyNames(leftSigners),
     rightName: joinPartyNames(rightSigners),
     leftSigners,
     rightSigners,
+    leftHidden: Boolean(stored?.leftHidden),
+    rightHidden: Boolean(stored?.rightHidden),
   }
 }
 

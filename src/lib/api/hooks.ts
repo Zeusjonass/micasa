@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import * as api from './client'
 import { nowIso, uid } from '../ids'
-import { clausesEqual } from '../diff'
+import { alignClauses, applyDecisions, clausesEqual } from '../diff'
+import { useHistory } from '../useHistory'
 import type {
   AskEntry,
   AskThread,
   Clause,
   ContractType,
   DocumentDetail,
+  DocumentFooter,
   DocumentKind,
   DocumentReview,
   DocumentSummary,
@@ -17,6 +19,16 @@ import type {
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback
+}
+
+type DocSnap = {
+  clauses: Clause[]
+  footer?: DocumentFooter
+  slots: Record<string, string>
+}
+
+function takeSnap(doc: DocumentDetail): DocSnap {
+  return { clauses: doc.clauses, footer: doc.footer, slots: doc.slots }
 }
 
 export function useProjects() {
@@ -96,6 +108,14 @@ export function useDocument(projectId: string | null, docId: string | null) {
   const [saving, setSaving] = useState(false)
   const [streamingText, setStreamingText] = useState('')
   const [review, setReview] = useState<DocumentReview | null>(null)
+  const documentRef = useRef<DocumentDetail | null>(null)
+  const savingRef = useRef(false)
+  const { push, undo: popUndo, redo: popRedo, reset, canUndo, canRedo } = useHistory<DocSnap>()
+  documentRef.current = document
+
+  useEffect(() => {
+    reset()
+  }, [docId])
 
   const refresh = useCallback(async () => {
     if (!projectId || !docId) {
@@ -148,15 +168,6 @@ export function useDocument(projectId: string | null, docId: string | null) {
 
       try {
         const result = await api.postTurn(projectId, docId, trimmed)
-        const words = result.text.split(/(\s+)/)
-        let acc = ''
-        for (const word of words) {
-          acc += word
-          setStreamingText(acc)
-          await new Promise((resolve) => {
-            window.setTimeout(resolve, word.trim() ? 14 : 4)
-          })
-        }
         const { version, ...patch } = result.document
         const assistantTurn: Turn = {
           id: uid('tmp'),
@@ -168,15 +179,16 @@ export function useDocument(projectId: string | null, docId: string | null) {
           documentVersion: version,
           latencyMs: result.metrics.latencyMs,
         }
+        const incoming = patch.clauses
         setDocument((current) => {
           if (!current) return current
-          const incoming = patch.clauses
           const hadDocument = current.clauses.length > 0
           if (incoming && hadDocument && !clausesEqual(current.clauses, incoming)) {
-            setReview({ base: current.clauses, proposed: incoming })
             const { clauses: _clauses, ...rest } = patch
+            setReview({ base: current.clauses, proposed: incoming })
             return { ...current, ...rest, turns: [...current.turns, assistantTurn] }
           }
+          push(takeSnap(current))
           setReview(null)
           return { ...current, ...patch, turns: [...current.turns, assistantTurn] }
         })
@@ -199,31 +211,82 @@ export function useDocument(projectId: string | null, docId: string | null) {
         setSending(false)
       }
     },
-    [projectId, docId, sending, review],
+    [projectId, docId, sending, review, push],
   )
 
   const applyClauses = useCallback(
     async (
       clauses: Clause[],
       extra?: { footer?: DocumentDetail['footer']; slots?: Record<string, string> },
+      options?: { history?: boolean },
     ) => {
       if (!projectId || !docId) return
+      const current = documentRef.current
+      if (options?.history !== false && current) push(takeSnap(current))
+      savingRef.current = true
       setSaving(true)
       try {
-        const updated = await api.applyDocument(projectId, docId, { clauses, ...extra })
-        setDocument((current) =>
-          current ? { ...updated, turns: current.turns } : updated,
-        )
+        const updated = await api.applyDocument(projectId, docId, {
+          clauses,
+          footer: extra?.footer ?? current?.footer,
+          slots: extra?.slots ?? current?.slots,
+        })
+        setDocument((prev) => (prev ? { ...updated, turns: prev.turns } : updated))
         setReview(null)
         setError(null)
       } catch (err) {
         setError(errorMessage(err, 'No pude guardar el documento.'))
       } finally {
         setSaving(false)
+        savingRef.current = false
+      }
+    },
+    [projectId, docId, push],
+  )
+
+  const restoreSnap = useCallback(
+    async (snap: DocSnap) => {
+      if (!projectId || !docId) return
+      savingRef.current = true
+      setSaving(true)
+      try {
+        const updated = await api.applyDocument(projectId, docId, snap)
+        setDocument((prev) => (prev ? { ...updated, turns: prev.turns } : updated))
+        setReview(null)
+        setError(null)
+      } catch (err) {
+        setError(errorMessage(err, 'No pude guardar el documento.'))
+      } finally {
+        setSaving(false)
+        savingRef.current = false
       }
     },
     [projectId, docId],
   )
+
+  const undo = useCallback(async () => {
+    const current = documentRef.current
+    if (!current || savingRef.current) return
+    const previous = popUndo(takeSnap(current))
+    if (previous) await restoreSnap(previous)
+  }, [popUndo, restoreSnap])
+
+  const redo = useCallback(async () => {
+    const current = documentRef.current
+    if (!current || savingRef.current) return
+    const next = popRedo(takeSnap(current))
+    if (next) await restoreSnap(next)
+  }, [popRedo, restoreSnap])
+
+  const acceptReview = useCallback(async () => {
+    if (!review) return
+    await applyClauses(applyDecisions(alignClauses(review.base, review.proposed), {}, 'accept'))
+  }, [review, applyClauses])
+
+  const rejectReview = useCallback(async () => {
+    if (!review) return
+    await applyClauses(applyDecisions(alignClauses(review.base, review.proposed), {}, 'reject'))
+  }, [review, applyClauses])
 
   return {
     document,
@@ -235,6 +298,12 @@ export function useDocument(projectId: string | null, docId: string | null) {
     review,
     sendTurn,
     applyClauses,
+    acceptReview,
+    rejectReview,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
     refresh,
   }
 }

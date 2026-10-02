@@ -12,6 +12,7 @@ export type AgentQuestion = {
 export type AgentCitation = {
   source: string
   article?: string
+  score?: number
 }
 
 export type Clause = {
@@ -64,6 +65,7 @@ export type Turn = {
 export type DocumentFooter = {
   disclaimer: string
   closing: string
+  heading?: string
   leftLabel: string
   rightLabel: string
   leftName: string
@@ -72,6 +74,8 @@ export type DocumentFooter = {
   leftSigners?: string[]
   /** Firmantes de la derecha, uno por raya. `[]` = se quitaron todas. */
   rightSigners?: string[]
+  leftHidden?: boolean
+  rightHidden?: boolean
 }
 
 export type DocumentDetail = DocumentSummary & {
@@ -97,6 +101,7 @@ export type DocumentPatch = {
   pendingQuestions: AgentQuestion[]
   extraClauses: Clause[]
   currentVersion: number
+  footer?: DocumentFooter
   clauses?: Clause[]
   version?: number
 }

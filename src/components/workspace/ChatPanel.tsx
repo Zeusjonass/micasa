@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import { formatClock } from '../../lib/ids'
 import type { DocumentDetail, Turn } from '../../lib/types'
 import { AutoGrowTextarea } from '../shared/AutoGrowTextarea'
-import { Citations } from '../shared/Citations'
 import { QuestionsBlock } from '../shared/QuestionsBlock'
 
 const EXAMPLE_PROMPTS = [
@@ -33,12 +32,29 @@ type ChatPanelProps = {
   document: DocumentDetail
   streamingText: string
   sending: boolean
+  reviewPending: boolean
+  saving: boolean
   onSend: (text: string) => void
+  onAcceptAll: () => void
+  onRejectAll: () => void
 }
 
-export function ChatPanel({ document, streamingText, sending, onSend }: ChatPanelProps) {
+export function ChatPanel({
+  document,
+  streamingText,
+  sending,
+  reviewPending,
+  saving,
+  onSend,
+  onAcceptAll,
+  onRejectAll,
+}: ChatPanelProps) {
   const [value, setValue] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const lastAssistantIndex = document.turns.reduce(
+    (found, turn, index) => (turn.role === 'assistant' ? index : found),
+    -1,
+  )
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
@@ -92,8 +108,37 @@ export function ChatPanel({ document, streamingText, sending, onSend }: ChatPane
           </div>
         ) : (
           <div className="space-y-4">
-            {document.turns.map((turn) => (
-              <TurnBubble key={turn.id} turn={turn} onPick={onSend} />
+            {document.turns.map((turn, index) => (
+              <TurnBubble
+                key={turn.id}
+                turn={turn}
+                onPick={onSend}
+                actions={
+                  reviewPending &&
+                  !sending &&
+                  turn.role === 'assistant' &&
+                  index === lastAssistantIndex ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={onAcceptAll}
+                        className="rounded-lg bg-forest px-3 py-1.5 text-xs font-medium text-cream disabled:opacity-40"
+                      >
+                        Aceptar todos los cambios
+                      </button>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={onRejectAll}
+                        className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink disabled:opacity-40"
+                      >
+                        Descartar
+                      </button>
+                    </div>
+                  ) : null
+                }
+              />
             ))}
             {sending ? (
               <div className="flex justify-start">
@@ -130,7 +175,15 @@ export function ChatPanel({ document, streamingText, sending, onSend }: ChatPane
   )
 }
 
-function TurnBubble({ turn, onPick }: { turn: Turn; onPick: (text: string) => void }) {
+function TurnBubble({
+  turn,
+  onPick,
+  actions,
+}: {
+  turn: Turn
+  onPick: (text: string) => void
+  actions?: ReactNode
+}) {
   const isUser = turn.role === 'user'
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -151,7 +204,7 @@ function TurnBubble({ turn, onPick }: { turn: Turn; onPick: (text: string) => vo
               ↳ Documento actualizado a v{turn.documentVersion}
             </p>
           ) : null}
-          {!isUser && turn.citations.length > 0 ? <Citations citations={turn.citations} /> : null}
+          {actions}
         </div>
         <p className={`mt-1 text-[11px] text-ink-soft ${isUser ? 'text-right' : ''}`}>
           {formatClock(turn.createdAt)}

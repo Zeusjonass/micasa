@@ -49,41 +49,17 @@ export async function buildContractDocx(input: {
   footer?: DocumentFooter | null
   version: number
 }): Promise<Blob> {
+  const footer = resolveFooter(input.type, input.slots ?? {}, input.footer)
   const children: Paragraph[] = [
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 80 },
-      children: [
-        new TextRun({
-          text: `MiCasa  ·  Yucatán  ·  Borrador v${input.version}`,
-          font: 'Times New Roman',
-          size: 20,
-          color: '666666',
-        }),
-      ],
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 240 },
-      children: [
-        new TextRun({
-          text: contractHeading(input.type),
-          bold: true,
-          font: 'Times New Roman',
-          size: 28,
-        }),
-      ],
-    }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 320 },
       children: [
         new TextRun({
-          text: input.title,
-          italics: true,
+          text: contractHeading(input.type, footer.heading),
+          bold: true,
           font: 'Times New Roman',
-          size: 20,
-          color: '555555',
+          size: 28,
         }),
       ],
     }),
@@ -99,7 +75,7 @@ export async function buildContractDocx(input: {
       spacing: { before: 280 },
       children: [
         new TextRun({
-          text: resolveFooter(input.type, input.slots ?? {}, input.footer).disclaimer,
+          text: footer.disclaimer,
           italics: true,
           font: 'Times New Roman',
           size: 16,
@@ -108,7 +84,6 @@ export async function buildContractDocx(input: {
       ],
     }),
   )
-  const footer = resolveFooter(input.type, input.slots ?? {}, input.footer)
   children.push(
     new Paragraph({
       spacing: { before: 360, after: 80 },
@@ -121,11 +96,22 @@ export async function buildContractDocx(input: {
       ],
     }),
   )
-  for (const group of [
-    { heading: pluralPartyLabel(footer.leftLabel, footer.leftSigners?.length || 0), names: footer.leftSigners ?? [] },
-    { heading: pluralPartyLabel(footer.rightLabel, footer.rightSigners?.length || 0), names: footer.rightSigners ?? [] },
-  ]) {
-    if (group.names.length === 0) continue
+  const groups = [
+    footer.leftHidden
+      ? null
+      : {
+          heading: pluralPartyLabel(footer.leftLabel, footer.leftSigners?.length || 0),
+          names: (footer.leftSigners?.length ? footer.leftSigners : ['']) as string[],
+        },
+    footer.rightHidden
+      ? null
+      : {
+          heading: pluralPartyLabel(footer.rightLabel, footer.rightSigners?.length || 0),
+          names: (footer.rightSigners?.length ? footer.rightSigners : ['']) as string[],
+        },
+  ]
+  for (const group of groups) {
+    if (!group) continue
     children.push(
       new Paragraph({
         spacing: { before: 320, after: 80 },

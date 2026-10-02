@@ -6,8 +6,8 @@ from clauses import (
     build_clauses,
     extra_from_extracted,
     extras_from_message,
+    is_edit_instruction,
     merge_extras,
-    wants_revision_text,
 )
 from compose import (
     is_abusive_entry_request,
@@ -196,6 +196,16 @@ def generate_document(state: dict) -> tuple[dict, list[dict]]:
     return {"id": doc_id, "version": version, "title": title}, clauses
 
 
+def stamp_rewritten(state: dict, clauses: list[dict]) -> tuple[dict, list[dict]]:
+    version = int(state.get("currentVersion") or 0) + 1
+    doc_id = state.get("documentId") or f"doc_{state['convId']}"
+    title = state.get("title") or title_from(state.get("contractType"), (state.get("slots") or {}).get("direccion"))
+    state["documentId"] = doc_id
+    state["currentVersion"] = version
+    state["title"] = title
+    return {"id": doc_id, "version": version, "title": title}, clauses
+
+
 def decide_turn(state: dict, extracted: dict, message: str = "") -> dict:
     previous_slots = dict(state.get("slots") or {})
     previous_extras = list(state.get("extraClauses") or [])
@@ -210,11 +220,19 @@ def decide_turn(state: dict, extracted: dict, message: str = "") -> dict:
         state["extraClauses"] = merge_extras(state.get("extraClauses"), incoming_extras)
     extras_changed = state.get("extraClauses") != previous_extras
     slots_changed = state.get("slots") != previous_slots
-    wants_revision = bool(extracted.get("wantsRevision")) or wants_revision_text(message) or extras_changed
     has_draft = int(state.get("currentVersion") or 0) > 0 and bool(state.get("contractType"))
+    wants_revision = extras_changed or slots_changed or (
+        has_draft and is_edit_instruction(message, extracted)
+    )
 
     if has_draft and wants_revision and not missing_fields(state.get("contractType"), state["slots"]):
-        if not extras_changed and not slots_changed:
+        if not extras_changed and (
+            is_self_help_request(message)
+            or is_usury_request(message)
+            or is_forfeiture_request(message)
+            or is_abusive_entry_request(message)
+            or is_auto_increase_request(message)
+        ):
             if is_self_help_request(message) or is_usury_request(message):
                 text = (
                     "No redacté usura, cambio de candados ni desalojo por vía de hecho. "
@@ -231,18 +249,10 @@ def decide_turn(state: dict, extracted: dict, message: str = "") -> dict:
                     "No puse entrada sin aviso ni de noche. La inspección ya está en conservación: "
                     "día y hora hábiles, aviso de 24 horas, sin estorbar el uso (art. 1574)."
                 )
-            elif is_auto_increase_request(message):
+            else:
                 text = (
                     "No puse un aumento automático de renta. La cláusula de pago ya impide revisiones "
                     "en periodos menores a los que permita la ley."
-                )
-            else:
-                heard = re.sub(r"\s+", " ", message).strip()
-                if len(heard) > 90:
-                    heard = heard[:87] + "…"
-                text = (
-                    f"Eso no lo metí al contrato. Te leí así: «{heard}». "
-                    "Dime en una frase qué se permite o se prohíbe y lo dejo por escrito."
                 )
             return {
                 "text": text,
@@ -252,63 +262,19 @@ def decide_turn(state: dict, extracted: dict, message: str = "") -> dict:
                 "nextState": state,
                 "fallbackCitations": fallback_citations(state["contractType"]),
             }
-        document, clauses = generate_document(state)
-        added = ", ".join(item.get("title") or item.get("id") for item in incoming_extras) if incoming_extras else ""
-        if incoming_extras and is_forfeiture_request(message):
-            note = (
-                "No puse el pago del valor de la casa ni cité 1583 como extinción de dominio: eso no es ejecutable. "
-                f"Dejé uso lícito y rescisión por destino distinto (arts. 1583-III y 1629-II). "
-                f"El blindaje real es el contrato por escrito y, si acaso, su ratificación. Versión {document['version']}."
-            )
-        elif incoming_extras and (is_usury_request(message) or is_self_help_request(message)):
-            note = (
-                "No pacte interés usurario ni cambio de candados. "
-                "La mora se rige por lo que permita la ley y la rescisión por tres meses sin pago "
-                f"(art. 1629, fracción I). Versión {document['version']}."
-            )
-        elif is_self_help_request(message):
-            note = (
-                "No redacté ingreso forzoso, retiro de bienes ni corte de servicios: eso es vía de hecho. "
-                f"El resto quedó en la versión {document['version']}, con rescisión ante las instancias competentes (art. 1629)."
-            )
-        elif incoming_extras and is_repair_shift_request(message):
-            note = (
-                "No pasé filtraciones ni daños estructurales al inquilino: el artículo 1574 los deja al arrendador. "
-                f"Dejé reparaciones menores por uso (art. 1583) en la versión {document['version']}."
-            )
-        elif incoming_extras and is_discriminatory_request(message):
-            note = (
-                f"No incluí una prohibición por edad o composición familiar: en Yucatán puede ser nula. "
-                f"Dejé ocupación y uso habitacional, con los artículos 1583 y 1629, en la versión {document['version']}."
-            )
-        elif incoming_extras:
-            note = (
-                f"Agregué la cláusula de {added.lower()} en la versión {document['version']}. "
-                "Ábrelo para verla o descargar Word/PDF."
-            )
-        elif deposit and deposit.startswith(("3", "4", "5", "6")):
-            note = (
-                f"Actualicé el depósito a {deposit} en la versión {document['version']}. "
-                "En predio habitacional, si se exige fianza y el inquilino no puede otorgarla, "
-                "el artículo 1619 no permite más garantía que un mes de renta."
-            )
-        else:
-            note = (
-                f"Actualicé el borrador a la versión {document['version']}. "
-                "Ábrelo para ver las cláusulas o descargar Word/PDF."
-            )
         return {
-            "text": note,
+            "text": "Voy a aplicar ese cambio en el borrador.",
             "questions": [],
-            "document": document,
-            "clauses": clauses,
+            "document": None,
+            "clauses": [],
+            "needsRewrite": True,
             "nextState": state,
             "fallbackCitations": fallback_citations(state["contractType"]),
         }
 
     if has_draft and not wants_revision and not missing_fields(state.get("contractType"), state["slots"]):
         return {
-            "text": "Este hilo ya tiene un borrador. Si quieres cambiar un dato o agregar una cláusula, escríbelo y lo aplico. Para otro contrato, abre un hilo nuevo.",
+            "text": "Cuando quieras cambiar el borrador, escríbelo y lo aplico aquí mismo.",
             "questions": [],
             "document": None,
             "clauses": [],
@@ -399,7 +365,10 @@ EXTRACT_TOOL = {
                     "formaPago": {"type": "string"},
                     "wantsRevision": {
                         "type": "boolean",
-                        "description": "true si pide cambiar, agregar o quitar algo de un borrador ya existente.",
+                        "description": (
+                            "true si el mensaje debe editar el borrador. "
+                            "En un documento ya creado, true salvo saludo, gracias o una pregunta legal que no pida cambiar el texto."
+                        ),
                     },
                     "needsCustomExtra": {
                         "type": "boolean",
@@ -435,6 +404,9 @@ EXTRACT_SYSTEM = (
     "Extrae SOLO hechos que el usuario escribió. No completes con ejemplos. "
     "Si dice arrendamiento, renta o alquiler → contractType=renta. "
     "Si dice compraventa o vender casa → contractType=venta. "
+    "Si ya hay un borrador, casi siempre wantsRevision=true: correcciones de redacción, "
+    "singular/plural, nombres, montos, quitar o agregar texto. "
+    "Solo wantsRevision=false si es un saludo, gracias, o una pregunta legal que no pide tocar el documento. "
     "Si pide cambiar datos, agregar o quitar una cláusula, o dice olvide/añade → wantsRevision=true. "
     "Si cambia el depósito a N meses → deposito='N meses de renta' y wantsRevision=true. No lo trates como pacto extra. "
     "Si pide no/sin/prohibido mascotas → extraClause id=mascotas mode=prohibido. "

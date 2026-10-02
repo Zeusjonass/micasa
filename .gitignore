@@ -11,7 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+!.env.example
+.env.production
 infra/.api-url
+infra/.amplify-url
 __pycache__/
 
 # Editor directories and files

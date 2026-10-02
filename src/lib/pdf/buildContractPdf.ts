@@ -138,29 +138,23 @@ export async function buildContractPdf(input: {
   const serifBold = await pdf.embedFont(StandardFonts.TimesRomanBold)
   const sans = await pdf.embedFont(StandardFonts.Helvetica)
   const maxWidth = PAGE.width - MARGIN * 2
-  const heading = contractHeading(input.type)
+  const footer = resolveFooter(input.type, input.slots, input.footer)
+  const heading = contractHeading(input.type, footer.heading)
 
   type Block =
-    | { kind: 'kicker'; text: string }
     | { kind: 'title'; text: string }
-    | { kind: 'meta'; text: string }
     | { kind: 'clauseTitle'; text: string }
     | { kind: 'body'; text: string }
     | { kind: 'disclaimer'; text: string }
     | { kind: 'signGroup'; heading: string; names: string[] }
 
-  const blocks: Block[] = [
-    { kind: 'kicker', text: `MiCasa  ·  Yucatán  ·  Borrador v${input.version}` },
-    { kind: 'title', text: heading },
-    { kind: 'meta', text: input.title },
-  ]
+  const blocks: Block[] = [{ kind: 'title', text: heading }]
 
   for (const clause of input.clauses) {
     blocks.push({ kind: 'clauseTitle', text: clause.title.toUpperCase() })
     blocks.push({ kind: 'body', text: clause.body })
   }
 
-  const footer = resolveFooter(input.type, input.slots, input.footer)
   blocks.push({ kind: 'disclaimer', text: footer.disclaimer })
   blocks.push({
     kind: 'body',
@@ -168,18 +162,18 @@ export async function buildContractPdf(input: {
   })
   const leftSigners = footer.leftSigners ?? []
   const rightSigners = footer.rightSigners ?? []
-  if (leftSigners.length > 0) {
+  if (!footer.leftHidden) {
     blocks.push({
       kind: 'signGroup',
       heading: pluralPartyLabel(footer.leftLabel, leftSigners.length),
-      names: leftSigners,
+      names: leftSigners.length ? leftSigners : [''],
     })
   }
-  if (rightSigners.length > 0) {
+  if (!footer.rightHidden) {
     blocks.push({
       kind: 'signGroup',
       heading: pluralPartyLabel(footer.rightLabel, rightSigners.length),
-      names: rightSigners,
+      names: rightSigners.length ? rightSigners : [''],
     })
   }
 
@@ -196,18 +190,6 @@ export async function buildContractPdf(input: {
   }
 
   for (const block of blocks) {
-    if (block.kind === 'kicker') {
-      ensure(20)
-      page.drawText(toWinAnsi(block.text), {
-        x: MARGIN,
-        y,
-        size: 9,
-        font: sans,
-        color: rgb(0.643, 0.506, 0.306),
-      })
-      y -= 18
-      continue
-    }
     if (block.kind === 'title') {
       const lines = wrap(block.text, serifBold, 16, maxWidth)
       ensure(lines.length * 20 + 8)
@@ -223,18 +205,6 @@ export async function buildContractPdf(input: {
         color: rgb(0.769, 0.647, 0.455),
       })
       y -= 10
-      continue
-    }
-    if (block.kind === 'meta') {
-      ensure(16)
-      page.drawText(toWinAnsi(block.text), {
-        x: MARGIN,
-        y,
-        size: 10,
-        font: sans,
-        color: rgb(0.36, 0.337, 0.306),
-      })
-      y -= 22
       continue
     }
     if (block.kind === 'clauseTitle') {

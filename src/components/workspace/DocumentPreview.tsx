@@ -31,13 +31,26 @@ type DocumentPreviewProps = {
   document: DocumentDetail
   review: DocumentReview | null
   saving: boolean
+  canUndo: boolean
+  canRedo: boolean
+  onUndo: () => void
+  onRedo: () => void
   onApply: (
     clauses: Clause[],
     extra?: { footer?: DocumentDetail['footer']; slots?: Record<string, string> },
   ) => Promise<void>
 }
 
-export function DocumentPreview({ document, review, saving, onApply }: DocumentPreviewProps) {
+export function DocumentPreview({
+  document,
+  review,
+  saving,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
+  onApply,
+}: DocumentPreviewProps) {
   const [busy, setBusy] = useState(false)
   const [decisions, setDecisions] = useState<Record<string, HunkDecision>>({})
 
@@ -133,6 +146,26 @@ export function DocumentPreview({ document, review, saving, onApply }: DocumentP
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
+            title="Deshacer"
+            aria-label="Deshacer"
+            disabled={saving || reviewing || !canUndo}
+            onClick={onUndo}
+            className="rounded-lg border border-line p-1.5 text-ink disabled:opacity-40"
+          >
+            <UndoIcon />
+          </button>
+          <button
+            type="button"
+            title="Rehacer"
+            aria-label="Rehacer"
+            disabled={saving || reviewing || !canRedo}
+            onClick={onRedo}
+            className="rounded-lg border border-line p-1.5 text-ink disabled:opacity-40"
+          >
+            <RedoIcon />
+          </button>
+          <button
+            type="button"
             disabled={busy || !hasDocument || displayClauses.length === 0}
             onClick={() => void downloadWord()}
             className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink disabled:opacity-40"
@@ -190,13 +223,14 @@ export function DocumentPreview({ document, review, saving, onApply }: DocumentP
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto bg-paper-2/80 px-3 py-6 scrollbar-thin">
           <article className="paper-shadow mx-auto min-h-0 max-w-[760px] bg-white px-5 py-8 text-[15px] leading-relaxed text-ink sm:min-h-[900px] sm:px-10 sm:py-12">
-            <p className="text-center text-xs tracking-[0.18em] text-ink-soft uppercase">
-              MiCasa · Yucatán · borrador v{document.currentVersion}
-            </p>
-            <h1 className="mt-3 text-center font-serif text-2xl uppercase leading-snug">
-              {contractHeading(contractType)}
+            <h1 className="mb-8 text-center font-serif text-2xl uppercase leading-snug">
+              <InlinePlain
+                value={contractHeading(contractType, footer?.heading)}
+                disabled={reviewing}
+                className="font-serif text-2xl uppercase leading-snug"
+                onSave={(heading) => void saveFooter({ ...footer!, heading })}
+              />
             </h1>
-            <p className="mt-1 mb-8 text-center text-sm text-ink-soft">{document.title}</p>
             {(reviewing ? hunks : document.clauses.map((clause) => ({ type: 'same' as const, id: clause.id, clause }))).map(
               (hunk) => (
                 <ClauseBlock
@@ -467,26 +501,56 @@ function ClosingBlock({
         />
       </div>
       <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-8">
-        <SignerColumn
-          heading={pluralPartyLabel(footer.leftLabel, leftSigners.length)}
-          headingFallback={footer.leftLabel}
-          names={leftSigners}
-          disabled={disabled}
-          onHeading={(leftLabel) => onSave({ ...footer, leftLabel })}
-          onEdit={(index, value) => editSigner('left', index, value)}
-          onRemove={(index) => saveSigners('left', leftSigners.filter((_, i) => i !== index))}
-          onAdd={() => saveSigners('left', [...leftSigners, ''])}
-        />
-        <SignerColumn
-          heading={pluralPartyLabel(footer.rightLabel, rightSigners.length)}
-          headingFallback={footer.rightLabel}
-          names={rightSigners}
-          disabled={disabled}
-          onHeading={(rightLabel) => onSave({ ...footer, rightLabel })}
-          onEdit={(index, value) => editSigner('right', index, value)}
-          onRemove={(index) => saveSigners('right', rightSigners.filter((_, i) => i !== index))}
-          onAdd={() => saveSigners('right', [...rightSigners, ''])}
-        />
+        {footer.leftHidden ? (
+          <RestoreColumn
+            label={footer.leftLabel || 'Vendedores'}
+            disabled={disabled}
+            onRestore={() =>
+              onSave({
+                ...footer,
+                leftHidden: false,
+                leftSigners: leftSigners.length ? leftSigners : [''],
+              })
+            }
+          />
+        ) : (
+          <SignerColumn
+            heading={pluralPartyLabel(footer.leftLabel, leftSigners.length)}
+            headingFallback={footer.leftLabel}
+            names={leftSigners}
+            disabled={disabled}
+            onHeading={(leftLabel) => onSave({ ...footer, leftLabel })}
+            onEdit={(index, value) => editSigner('left', index, value)}
+            onRemove={(index) => saveSigners('left', leftSigners.filter((_, i) => i !== index))}
+            onAdd={() => saveSigners('left', [...leftSigners, ''])}
+            onHide={() => onSave({ ...footer, leftHidden: true })}
+          />
+        )}
+        {footer.rightHidden ? (
+          <RestoreColumn
+            label={footer.rightLabel || 'Compradores'}
+            disabled={disabled}
+            onRestore={() =>
+              onSave({
+                ...footer,
+                rightHidden: false,
+                rightSigners: rightSigners.length ? rightSigners : [''],
+              })
+            }
+          />
+        ) : (
+          <SignerColumn
+            heading={pluralPartyLabel(footer.rightLabel, rightSigners.length)}
+            headingFallback={footer.rightLabel}
+            names={rightSigners}
+            disabled={disabled}
+            onHeading={(rightLabel) => onSave({ ...footer, rightLabel })}
+            onEdit={(index, value) => editSigner('right', index, value)}
+            onRemove={(index) => saveSigners('right', rightSigners.filter((_, i) => i !== index))}
+            onAdd={() => saveSigners('right', [...rightSigners, ''])}
+            onHide={() => onSave({ ...footer, rightHidden: true })}
+          />
+        )}
       </div>
     </div>
   )
@@ -501,6 +565,7 @@ function SignerColumn({
   onEdit,
   onRemove,
   onAdd,
+  onHide,
 }: {
   heading: string
   headingFallback: string
@@ -510,18 +575,44 @@ function SignerColumn({
   onEdit: (index: number, value: string) => void
   onRemove: (index: number) => void
   onAdd: () => void
+  onHide: () => void
 }) {
   return (
-    <div className="min-w-0 text-center text-xs">
+    <div className="group/col relative min-w-0 rounded-xl px-2 py-2 text-center text-xs transition-colors hover:bg-paper/70">
+      {disabled ? null : (
+        <button
+          type="button"
+          title="Quitar esta parte"
+          aria-label="Quitar esta parte"
+          onClick={onHide}
+          className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[13px] leading-none text-ink-soft opacity-0 hover:bg-white hover:text-danger group-hover/col:opacity-100"
+        >
+          ×
+        </button>
+      )}
       <InlinePlain
         value={heading || headingFallback}
         disabled={disabled}
         className="font-semibold tracking-wide uppercase"
         onSave={onHeading}
       />
-      <div className="mt-2 grid grid-cols-1 gap-8">
+      <div className="mt-2 grid grid-cols-1 gap-6">
         {names.map((name, index) => (
-          <div key={`signer-${index}`} className="group relative pt-8">
+          <div
+            key={`signer-${index}`}
+            className="group/line relative rounded-lg px-1 pt-7 pb-1 transition-colors hover:bg-white/80"
+          >
+            {disabled ? null : (
+              <button
+                type="button"
+                title="Quitar esta firma"
+                aria-label={`Quitar firma de ${name || 'esta línea'}`}
+                onClick={() => onRemove(index)}
+                className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full text-[13px] leading-none text-ink-soft opacity-0 hover:bg-paper hover:text-danger group-hover/line:opacity-100"
+              >
+                ×
+              </button>
+            )}
             <div className="border-t border-ink pt-2 font-bold">
               <InlinePlain
                 value={name || '________________'}
@@ -530,17 +621,6 @@ function SignerColumn({
                 onSave={(value) => onEdit(index, value)}
               />
             </div>
-            {disabled ? null : (
-              <button
-                type="button"
-                title="Quitar esta firma"
-                aria-label={`Quitar firma de ${name || 'esta línea'}`}
-                onClick={() => onRemove(index)}
-                className="absolute top-1 right-0 rounded px-1.5 py-0.5 text-[10px] text-ink-soft opacity-0 hover:bg-paper hover:text-danger group-hover:opacity-100"
-              >
-                Quitar
-              </button>
-            )}
           </div>
         ))}
       </div>
@@ -554,5 +634,70 @@ function SignerColumn({
         </button>
       )}
     </div>
+  )
+}
+
+function RestoreColumn({
+  label,
+  disabled,
+  onRestore,
+}: {
+  label: string
+  disabled: boolean
+  onRestore: () => void
+}) {
+  if (disabled) return <div />
+  return (
+    <button
+      type="button"
+      onClick={onRestore}
+      className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-line px-3 text-center text-xs text-ink-soft hover:border-forest/40 hover:text-ink"
+    >
+      Mostrar {label.toLocaleLowerCase('es-MX')}
+    </button>
+  )
+}
+
+function UndoIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M3.5 7.5h6.5a3 3 0 1 1 0 6H8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M3.5 7.5 6 5M3.5 7.5 6 10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function RedoIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M12.5 7.5H6a3 3 0 1 0 0 6h2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12.5 7.5 10 5M12.5 7.5 10 10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }

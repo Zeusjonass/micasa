@@ -10,6 +10,7 @@ const HEADINGS: Record<ContractType, string> = {
   venta: 'CONTRATO DE COMPRAVENTA DE CASA HABITACIÓN',
 }
 
-export function contractHeading(type: ContractType): string {
-  return HEADINGS[type]
+export function contractHeading(type: ContractType, stored?: string | null): string {
+  const value = (stored || '').trim()
+  return value || HEADINGS[type]
 }

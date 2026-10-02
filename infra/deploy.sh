@@ -47,7 +47,7 @@ rm -f /tmp/micasa-chat.zip
   cd infra/chat
   # infra/chat/templates/*.json es la única fuente de verdad de las plantillas de
   # contrato (el frontend ya no mantiene una copia propia).
-  zip -q /tmp/micasa-chat.zip handler.py agent.py clauses.py compose.py templates/*.json
+  zip -q /tmp/micasa-chat.zip handler.py agent.py clauses.py compose.py wording.py templates/*.json
 )
 
 # TEMPORAL: Kimi K3. El default del código es Haiku.

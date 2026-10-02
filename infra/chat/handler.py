@@ -15,18 +15,32 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from botocore.httpsession import URLLib3Session
 
-from agent import EXTRACT_SYSTEM, EXTRACT_TOOL, decide_turn, normalize_type
-from clauses import extra_from_extracted, extras_from_message, load_catalog, merge_extras
+from agent import EXTRACT_SYSTEM, EXTRACT_TOOL, decide_turn, normalize_type, stamp_rewritten
+from wording import (
+    apply_footer_instruction,
+    apply_lexical_footer,
+    apply_lexical_wording,
+    clauses_text_equal,
+    desired_seller_label,
+    instruction_satisfied,
+    keep_unmodified,
+)
+from clauses import attach_new_extras, extra_from_extracted, extras_from_message, load_catalog, merge_extras
 from compose import (
     COMPOSE_SYSTEM,
     COMPOSE_TOOL,
+    REWRITE_SYSTEM,
+    REWRITE_TOOL,
     compose_user_prompt,
     is_abusive_entry_request,
     is_auto_increase_request,
     is_repair_shift_request,
     is_self_help_request,
+    merge_rewritten,
     parse_composed,
+    parse_rewritten,
     retrieved_context,
+    rewrite_user_prompt,
     validate_composed,
     wants_new_pact,
 )
@@ -44,6 +58,7 @@ VOICE_SYSTEM = (
     "como un asesor de vivienda en Mérida, no como un formulario. "
     "Reescribe SOLO el tono del mensaje. No agregues cláusulas, artículos, montos, nombres ni ofertas. "
     "No sugieras mascotas, número de personas, fiestas ni ejemplos que el usuario no pidió. "
+    "Si el original dice que NO se metió un cambio, no digas que ya lo aplicaste. "
     "Si el original cita un artículo, consérvalo. Sin markdown ni título. 2 a 4 frases."
 )
 ASK_SYSTEM = (
@@ -152,6 +167,13 @@ def retrieve(query: str) -> tuple[list[dict], int]:
     return payload.get("retrievalResults") or [], elapsed
 
 
+def _result_score(result: dict) -> float | None:
+    score = result.get("score")
+    if score is None:
+        return None
+    return round(float(score), 4)
+
+
 def source_name(result: dict) -> str:
     location = result.get("location") or {}
     uri = (
@@ -201,7 +223,11 @@ def citations_for_answer(results: list[dict], answer: str, fallback: list[dict] 
                 if key in seen:
                     continue
                 seen.add(key)
-                citations.append({"source": source, "article": article})
+                item = {"source": source, "article": article}
+                score = _result_score(result)
+                if score is not None:
+                    item["score"] = score
+                citations.append(item)
         if citations:
             return citations[:4]
 
@@ -211,7 +237,11 @@ def citations_for_answer(results: list[dict], answer: str, fallback: list[dict] 
         if key in seen:
             continue
         seen.add(key)
-        citations.append({"source": source})
+        item = {"source": source}
+        score = _result_score(result)
+        if score is not None:
+            item["score"] = score
+        citations.append(item)
         if len(citations) >= 4:
             break
     return citations or (fallback or [])
@@ -386,6 +416,19 @@ def compose_extra_clauses(
     )
     result = converse(COMPOSE_SYSTEM, prompt, [COMPOSE_TOOL], "apply_extra_clauses", 1200, 0.2)
     return validate_composed(parse_composed(result), contract_type, message)
+
+
+def rewrite_document_clauses(
+    message: str,
+    contract_type: str,
+    clauses: list,
+    slots: dict,
+) -> list:
+    if not clauses:
+        return []
+    prompt = rewrite_user_prompt(message, contract_type, clauses, slots)
+    result = converse(REWRITE_SYSTEM, prompt, [REWRITE_TOOL], "apply_rewritten_clauses", 4000, 0.1)
+    return keep_unmodified(clauses, merge_rewritten(clauses, parse_rewritten(result)))
 
 
 # ---------------------------------------------------------------------------
@@ -613,6 +656,7 @@ def turn_response(doc_id: str, turn: dict, metrics: dict) -> dict:
         "slots": state.get("slots") or {},
         "pendingQuestions": state.get("pendingQuestions") or [],
         "extraClauses": state.get("extraClauses") or [],
+        "footer": state.get("footer") or {},
         "currentVersion": int(state.get("currentVersion") or 0),
     }
     # "clauses"/"version" solo se incluyen cuando este turno generó una versión nueva.
@@ -815,8 +859,80 @@ def post_turn(params: list[str], body: dict) -> dict:
             extracted["composedExtras"] = []
 
     turn = decide_turn(state, extracted, message)
+    version = int(item.get("currentVersion") or 0)
+    current_clauses = (get_version_item(project_id, doc_id, version) or {}).get("clauses") or []
+    contract_type = turn["nextState"].get("contractType") or contract_type
+    slots_now = turn["nextState"].get("slots") or {}
+    footer_patch, footer_note = apply_footer_instruction(
+        message, turn["nextState"].get("footer"), slots_now, contract_type
+    )
+    if footer_patch:
+        turn["nextState"]["footer"] = apply_lexical_footer(message, footer_patch, slots_now)
+        if footer_patch.get("leftName"):
+            key = "arrendador" if contract_type == "renta" else "vendedor"
+            slots_now[key] = footer_patch["leftName"]
+        if footer_patch.get("rightName"):
+            key = "arrendatario" if contract_type == "renta" else "comprador"
+            slots_now[key] = footer_patch["rightName"]
+        turn["nextState"]["slots"] = slots_now
+    else:
+        turn["nextState"]["footer"] = apply_lexical_footer(
+            message, turn["nextState"].get("footer"), slots_now
+        )
+    skip_rewrite = bool(footer_note) and not desired_seller_label(message, slots_now)
+    if (turn.get("needsRewrite") or turn.get("document")) and not skip_rewrite:
+        starting = turn.get("clauses") if turn.get("document") and not turn.get("needsRewrite") else current_clauses
+        starting = attach_new_extras(starting or [], turn["nextState"].get("extraClauses") or [])
+        proven = apply_lexical_wording(message, starting or [], slots_now) or []
+        if proven:
+            proven = keep_unmodified(starting, proven)
+        if not proven or not instruction_satisfied(message, proven, slots_now):
+            try:
+                rewritten = rewrite_document_clauses(
+                    message,
+                    contract_type,
+                    starting or [],
+                    slots_now,
+                )
+            except Exception as error:
+                print("rewrite_failed", error)
+                rewritten = []
+            rewritten = keep_unmodified(starting, rewritten) if rewritten else []
+            if (
+                rewritten
+                and not clauses_text_equal(current_clauses, rewritten)
+                and instruction_satisfied(message, rewritten, slots_now)
+            ):
+                proven = rewritten
+            elif proven and not clauses_text_equal(current_clauses, proven):
+                pass
+            elif not clauses_text_equal(current_clauses, starting):
+                proven = starting
+            else:
+                proven = []
+        if proven and not clauses_text_equal(current_clauses, proven):
+            if turn.get("document"):
+                turn["clauses"] = proven
+            else:
+                document, clauses = stamp_rewritten(turn["nextState"], proven)
+                turn["document"] = document
+                turn["clauses"] = clauses
+            version_label = (turn.get("document") or {}).get("version") or turn["nextState"].get("currentVersion")
+            turn["text"] = (
+                f"Dejé el cambio en la versión {version_label}. "
+                "Revisa el documento: acepta o descarta cada parte."
+            )
+        elif turn.get("needsRewrite") and not footer_note:
+            turn["document"] = None
+            turn["clauses"] = []
+            turn["text"] = (
+                "No pude dejar ese cambio en el texto del contrato. "
+                "Dime las palabras exactas que deben quedar y las que hay que quitar."
+            )
+    if footer_note and not turn.get("document"):
+        turn["text"] = footer_note
     missing_only = bool(turn.get("questions")) and not turn.get("document")
-    if not missing_only:
+    if not missing_only and not turn.get("document") and not footer_note:
         turn["text"] = voice_reply(turn.get("text") or "", message)
 
     if not retrieved:
@@ -995,12 +1111,8 @@ def _filter_ask_results(question: str, results: list[dict]) -> list[dict]:
     return kept or results
 
 
-def post_ask_in_thread(params: list[str], body: dict) -> dict:
-    project_id, thread_id = params
-    question = (body.get("question") or "").strip()
-    if not question:
-        raise ApiError(400, "Falta question")
-
+def _rag_answer(question: str) -> dict:
+    """Retrieve top-k + generar. Lo usan el asistente y POST /query."""
     started = time.perf_counter()
     retrieved: list[dict] = []
     retrieval_ms = 0
@@ -1036,6 +1148,75 @@ def post_ask_in_thread(params: list[str], body: dict) -> dict:
 
     citations = citations_for_answer(retrieved, answer)
     latency_ms = int((time.perf_counter() - started) * 1000)
+    abstained = "no pude responder con las fuentes" in answer.lower()
+    retrieved_out = [
+        {"source": source_name(item), "score": _result_score(item)}
+        for item in retrieved
+    ]
+    return {
+        "answer": answer,
+        "citations": citations,
+        "retrieved": retrieved_out,
+        "retrievedCount": len(retrieved),
+        "metrics": {"latencyMs": latency_ms, "retrievalMs": retrieval_ms},
+        "abstained": abstained,
+    }
+
+
+def get_health(_params: list[str], _body: dict) -> dict:
+    return {
+        "ok": True,
+        "service": "micasa-chat",
+        "index": "bedrock-knowledge-base",
+        "kbId": KB_ID,
+        "model": MODEL_ID,
+        "fallbackModel": FALLBACK_MODEL_ID,
+        "topK": TOP_K,
+        "region": REGION,
+    }
+
+
+def post_query(_params: list[str], body: dict) -> dict:
+    question = (body.get("question") or body.get("query") or "").strip()
+    if not question:
+        raise ApiError(400, "Falta question")
+    rag = _rag_answer(question)
+    return {
+        "question": question,
+        "answer": rag["answer"],
+        "citations": rag["citations"],
+        "retrieved": rag["retrieved"],
+        "k": TOP_K,
+        "retrievedCount": rag["retrievedCount"],
+        "abstained": rag["abstained"],
+        "metrics": rag["metrics"],
+    }
+
+
+def post_ingest(_params: list[str], _body: dict) -> dict:
+    return {
+        "ok": True,
+        "ingested": False,
+        "message": (
+            "La ingestión no corre en este POST: se sube el PDF a s3://micasa-kb-source/ "
+            "y se lanza Sync en la Knowledge Base. Equivale a POST /ingest del enunciado."
+        ),
+        "bucket": "micasa-kb-source",
+        "kbId": KB_ID,
+    }
+
+
+def post_ask_in_thread(params: list[str], body: dict) -> dict:
+    project_id, thread_id = params
+    question = (body.get("question") or "").strip()
+    if not question:
+        raise ApiError(400, "Falta question")
+
+    rag = _rag_answer(question)
+    answer = rag["answer"]
+    citations = rag["citations"]
+    retrieval_ms = rag["metrics"]["retrievalMs"]
+    latency_ms = rag["metrics"]["latencyMs"]
     created = now_iso()
     ask_id = uid("ask")
     try:
@@ -1088,6 +1269,9 @@ def post_ask_in_thread(params: list[str], body: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 ROUTES: list[tuple[re.Pattern, dict[str, object]]] = [
+    (re.compile(r"^/health$"), {"GET": get_health}),
+    (re.compile(r"^/query$"), {"POST": post_query}),
+    (re.compile(r"^/ingest$"), {"POST": post_ingest}),
     (re.compile(r"^/projects$"), {"GET": list_projects, "POST": create_project}),
     (
         re.compile(r"^/projects/([^/]+)/documents$"),

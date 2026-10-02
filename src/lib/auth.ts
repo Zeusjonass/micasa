@@ -5,7 +5,7 @@ export function isSessionActive(): boolean {
 }
 
 export function login(username: string, password: string): boolean {
-  if (username.trim() === 'admin' && password === 'admin') {
+  if (username.trim() === 'admin' && password === 'Admin2026!') {
     sessionStorage.setItem(SESSION_KEY, 'admin')
     return true
   }

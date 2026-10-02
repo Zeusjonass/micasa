@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useDocument } from '../../lib/api/hooks'
 import { usePanel } from '../../lib/usePanel'
 import { ResizeHandle } from '../shared/ResizeHandle'
@@ -13,10 +13,40 @@ type DocumentWorkspaceProps = {
 }
 
 export function DocumentWorkspace({ projectId, docId, onBack }: DocumentWorkspaceProps) {
-  const { document, loading, error, sending, saving, streamingText, review, sendTurn, applyClauses } =
-    useDocument(projectId, docId)
+  const {
+    document,
+    loading,
+    error,
+    sending,
+    saving,
+    streamingText,
+    review,
+    sendTurn,
+    applyClauses,
+    acceptReview,
+    rejectReview,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useDocument(projectId, docId)
   const panel = usePanel('micasa:workspace-panel', { defaultWidth: 480, minWidth: 340, maxWidth: 640 })
   const [mobileView, setMobileView] = useState<'document' | 'chat'>('chat')
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null
+      if (target?.closest('textarea, input, [contenteditable="true"]')) return
+      const key = event.key.toLowerCase()
+      if ((event.metaKey || event.ctrlKey) && key === 'z') {
+        event.preventDefault()
+        if (event.shiftKey) void redo()
+        else void undo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [undo, redo])
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -85,6 +115,10 @@ export function DocumentWorkspace({ projectId, docId, onBack }: DocumentWorkspac
               document={document}
               review={review}
               saving={saving}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onUndo={() => void undo()}
+              onRedo={() => void redo()}
               onApply={applyClauses}
             />
           </div>
@@ -106,7 +140,11 @@ export function DocumentWorkspace({ projectId, docId, onBack }: DocumentWorkspac
               document={document}
               streamingText={streamingText}
               sending={sending}
+              reviewPending={Boolean(review)}
+              saving={saving}
               onSend={(text) => void sendTurn(text)}
+              onAcceptAll={() => void acceptReview()}
+              onRejectAll={() => void rejectReview()}
             />
           </div>
         </div>

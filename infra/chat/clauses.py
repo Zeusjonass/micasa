@@ -232,14 +232,62 @@ def extra_from_extracted(extracted: dict | None, contract_type: str | None = Non
     return found
 
 
+_NON_EDIT_RE = re.compile(
+    r"^\s*("
+    r"gracias(\s+\w+){0,6}|"
+    r"(muy\s+)?bien|"
+    r"ok(ay)?|"
+    r"va|"
+    r"perfecto|"
+    r"listo|"
+    r"hola|"
+    r"buenos?\s+d[ií]as|"
+    r"buenas(\s+tardes)?|"
+    r"(me\s+)?(puedes\s+)?(descargar|bajar|exportar)\s+(el\s+)?(pdf|word)|"
+    r"m[aá]ndame\s+el\s+(pdf|word)"
+    r")\s*[.!]?\s*$",
+    re.I,
+)
+
+_LEGAL_QUESTION_RE = re.compile(
+    r"^\s*(qu[eé]\s+(es|significa|dice|permite)|expl[ií]came|seg[uú]n\s+el\s+c[oó]digo)\b",
+    re.I,
+)
+
+
+def is_non_edit_message(message: str) -> bool:
+    """Saludo, gracias o pregunta legal que no pide tocar el borrador."""
+    text = re.sub(r"\s+", " ", message or "").strip()
+    if len(text) <= 2:
+        return True
+    if _NON_EDIT_RE.match(text):
+        return True
+    if _LEGAL_QUESTION_RE.match(text) and not wants_revision_text(text):
+        return True
+    return False
+
+
 def wants_revision_text(message: str) -> bool:
     return bool(
         re.search(
-            r"\b(agrega|agregue|añade|anade|olvide|olvidé|clausula|cláusula|cambia|modifica|actualiza|ajusta|deposito|depósito|mascota|quita|elimina|permite|permitir|reparacion|reparación|filtracion|cerrajero|mora|candado|droga)\b",
+            r"\b(agrega|agregue|añade|anade|olvide|olvidé|clausula|cláusula|cambia|modifica|"
+            r"actualiza|ajusta|deposito|depósito|mascota|quita|elimina|permite|permitir|"
+            r"reparacion|reparación|filtracion|cerrajero|mora|candado|droga|corrige|correg|"
+            r"asegur|dejamelo|d[eé]jalo|usa|llame|llamar|refier|redacci[oó]n|en el (contrato|documento|borrador)|"
+            r"promitente|plural|singular)\b",
             message,
             re.I,
         )
     )
+
+
+def is_edit_instruction(message: str, extracted: dict | None = None) -> bool:
+    """En el chat del documento casi todo es una edición, salvo excepciones obvias."""
+    if extracted and extracted.get("wantsRevision") is True:
+        return True
+    if is_non_edit_message(message):
+        return False
+    return True
 
 
 def merge_extras(current: list | None, incoming: list[dict]) -> list[dict]:
@@ -284,6 +332,12 @@ def attach_extras(clauses: list[dict], extras: list[dict]) -> list[dict]:
         ordinal = ORDINALS[start + len(extras) - 1] if start + len(extras) - 1 < len(ORDINALS) else "Última"
         result.append({**jurisdiction, "title": f"{ordinal}.- Jurisdicción"})
     return result
+
+
+def attach_new_extras(clauses: list[dict], extras: list[dict] | None) -> list[dict]:
+    have = {clause.get("id") for clause in clauses}
+    missing = [extra for extra in extras or [] if extra.get("id") and extra.get("id") not in have]
+    return attach_extras(clauses, missing) if missing else clauses
 
 
 def modules_from_template(contract_type: str, slots: dict) -> list[dict]:
